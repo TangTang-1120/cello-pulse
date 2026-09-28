@@ -10,9 +10,9 @@ import {
 import type { CelloStringId } from '../audio/notes'
 import { StaffSnippet } from './StaffSnippet'
 
-const LEAD_MS = 2000
-const PERFECT_MS = 100
-const GOOD_MS = 260
+const LEAD_MS = 2800
+const PERFECT_MS = 140
+const GOOD_MS = 360
 const LANE_H = 360
 const HIT_Y = LANE_H - 72
 
@@ -379,7 +379,7 @@ export function RhythmPanel({
         <input
           type="range"
           min={40}
-          max={160}
+          max={120}
           step={2}
           value={bpm}
           onChange={(e) => {

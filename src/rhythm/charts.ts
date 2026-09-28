@@ -19,7 +19,7 @@ export type Chart = {
 const beat = (bpm: number) => 60000 / bpm
 
 function arpeggio(): ChartNote[] {
-  const b = beat(72)
+  const b = beat(50)
   const order: CelloStringId[] = ['C', 'G', 'D', 'A', 'D', 'G', 'C', 'G', 'D', 'A', 'A', 'D']
   return order.map((string, i) => ({
     timeMs: Math.round(i * b),
@@ -30,7 +30,7 @@ function arpeggio(): ChartNote[] {
 }
 
 function firstPosition(): ChartNote[] {
-  const b = beat(80)
+  const b = beat(50)
   const seq: Array<[CelloStringId, number, 0 | 1 | 2 | 3 | 4]> = [
     ['D', 0, 0],
     ['D', 2, 1],
@@ -59,7 +59,7 @@ function firstPosition(): ChartNote[] {
 }
 
 function openRhythm(): ChartNote[] {
-  const b = beat(88)
+  const b = beat(50)
   const pattern: Array<[number, CelloStringId]> = [
     [0, 'G'],
     [1, 'G'],
@@ -88,7 +88,7 @@ function openRhythm(): ChartNote[] {
 
 /** 识谱练习：看低音谱号五线谱，点对应弦 */
 function staffReading(): ChartNote[] {
-  const b = beat(70)
+  const b = beat(50)
   const seq: Array<[CelloStringId, number, 0 | 1 | 2 | 3 | 4]> = [
     ['C', 0, 0],
     ['G', 0, 0],
@@ -121,28 +121,28 @@ export const CHARTS: Chart[] = [
     id: 'staff-reading',
     title: '识五线谱',
     subtitle: '看低音谱号 · 点对应琴弦',
-    baseBpm: 70,
+    baseBpm: 50,
     notes: staffReading(),
   },
   {
     id: 'arpeggio',
     title: '空弦琶音',
     subtitle: 'C - G - D - A 四空弦运弓',
-    baseBpm: 72,
+    baseBpm: 50,
     notes: arpeggio(),
   },
   {
     id: 'first-position',
     title: '第一把位音阶',
     subtitle: 'D弦上行 · 跨弦到 A弦',
-    baseBpm: 80,
+    baseBpm: 50,
     notes: firstPosition(),
   },
   {
     id: 'open-rhythm',
     title: '空弦节奏练习',
     subtitle: '四分 + 八分混合节奏',
-    baseBpm: 88,
+    baseBpm: 50,
     notes: openRhythm(),
   },
 ]
