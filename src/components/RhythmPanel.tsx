@@ -294,19 +294,7 @@ export function RhythmPanel({
   const doneCount = notesRef.current.filter((n) => n.verdict).length
 
   return (
-    <section className="panel panel-in rhythm-panel pro-practice">
-      <div className="rhythm-head">
-        <div>
-          <p className="rhythm-kicker">专业练习 · 谱面 × 指板 × 音准</p>
-          <h2 className="rhythm-title">{chart.title}</h2>
-          <p className="note-meta">{chart.subtitle}</p>
-        </div>
-        <div className="rhythm-score">
-          <strong>{score}</strong>
-          <span>{mode === 'listen' ? `${doneCount}/${chart.notes.length}` : '分数'}</span>
-        </div>
-      </div>
-
+    <section className={`panel panel-in rhythm-panel pro-practice ${mode === 'rhythm' ? 'rhythm-simple' : ''}`}>
       <div className="mode-switch" role="tablist" aria-label="练习模式">
         <button
           type="button"
@@ -331,254 +319,330 @@ export function RhythmPanel({
         </button>
       </div>
 
-      <StaffSnippet
-        stringId={current?.string}
-        semitones={current?.semitones}
-        finger={current?.finger}
-        pulse={approaching && phase === 'playing'}
-      />
-
-      <div className="pro-row">
-        <MiniFingerboard stringId={current?.string} semitones={current?.semitones} />
-        <div className={`finger-tip stack ${approaching && phase === 'playing' ? 'hot' : ''}`}>
-          {current && tip ? (
-            <>
-              <div className="finger-roman" style={{ color: STRING_COLOR[current.string] }}>
-                <strong>{stringMeta(current.string).roman}</strong>
-                <span>{stringMeta(current.string).name}</span>
-              </div>
-              <div className="finger-copy">
-                <p className="note-name">{tip.letter}</p>
-                <p className="note-meta">
-                  {tip.solfege} · {fingerLabel(current.finger, current.position)}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="ghost ref-btn"
-                onClick={() => playReference(current.string, current.semitones)}
-              >
-                听标准音
-              </button>
-            </>
-          ) : (
-            <p className="note-meta tip-idle">选择曲目后开始 · 看谱找指位再拉奏</p>
-          )}
-        </div>
-      </div>
-
       {mode === 'listen' ? (
-        <div className={`intonation ${pitchHint}`}>
-          <div className="intonation-bar">
-            <span
-              className="intonation-needle"
-              style={{
-                left: `${centsLive == null ? 50 : Math.min(92, Math.max(8, 50 + centsLive))}%`,
-              }}
-            />
-            <i className="center-mark" />
+        <>
+          <div className="rhythm-head">
+            <div>
+              <p className="rhythm-kicker">专业练习 · 谱面 × 指板 × 音准</p>
+              <h2 className="rhythm-title">{chart.title}</h2>
+              <p className="note-meta">{chart.subtitle}</p>
+            </div>
+            <div className="rhythm-score">
+              <strong>{score}</strong>
+              <span>
+                {doneCount}/{chart.notes.length}
+              </span>
+            </div>
           </div>
-          <p className="note-meta">
-            {phase !== 'playing'
-              ? '麦克风听音判定 · 对准后自动进入下一音'
-              : pitchHint === 'ok'
-                ? `准确 ${centsLive != null ? `${centsLive > 0 ? '+' : ''}${centsLive.toFixed(0)}¢` : ''}`
-                : pitchHint === 'flat'
-                  ? '偏低 · 再抬高一点'
-                  : pitchHint === 'sharp'
-                    ? '偏高 · 再压低一点'
-                    : '请拉奏目标音…'}
-          </p>
-          {tuner.error ? <p className="error">{tuner.error}</p> : null}
-        </div>
+
+          <StaffSnippet
+            stringId={current?.string}
+            semitones={current?.semitones}
+            finger={current?.finger}
+            pulse={approaching && phase === 'playing'}
+          />
+
+          <div className="pro-row">
+            <MiniFingerboard stringId={current?.string} semitones={current?.semitones} />
+            <div className={`finger-tip stack ${approaching && phase === 'playing' ? 'hot' : ''}`}>
+              {current && tip ? (
+                <>
+                  <div className="finger-roman" style={{ color: STRING_COLOR[current.string] }}>
+                    <strong>{stringMeta(current.string).roman}</strong>
+                    <span>{stringMeta(current.string).name}</span>
+                  </div>
+                  <div className="finger-copy">
+                    <p className="note-name">{tip.letter}</p>
+                    <p className="note-meta">
+                      {tip.solfege} · {fingerLabel(current.finger, current.position)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="ghost ref-btn"
+                    onClick={() => playReference(current.string, current.semitones)}
+                  >
+                    听标准音
+                  </button>
+                </>
+              ) : (
+                <p className="note-meta tip-idle">选择曲目后开始 · 看谱找指位再拉奏</p>
+              )}
+            </div>
+          </div>
+
+          <div className={`intonation ${pitchHint}`}>
+            <div className="intonation-bar">
+              <span
+                className="intonation-needle"
+                style={{
+                  left: `${centsLive == null ? 50 : Math.min(92, Math.max(8, 50 + centsLive))}%`,
+                }}
+              />
+              <i className="center-mark" />
+            </div>
+            <p className="note-meta">
+              {phase !== 'playing'
+                ? '麦克风听音判定 · 对准后自动进入下一音'
+                : pitchHint === 'ok'
+                  ? `准确 ${centsLive != null ? `${centsLive > 0 ? '+' : ''}${centsLive.toFixed(0)}¢` : ''}`
+                  : pitchHint === 'flat'
+                    ? '偏低 · 再抬高一点'
+                    : pitchHint === 'sharp'
+                      ? '偏高 · 再压低一点'
+                      : '请拉奏目标音…'}
+            </p>
+            {tuner.error ? <p className="error">{tuner.error}</p> : null}
+          </div>
+
+          {phase === 'idle' || phase === 'countdown' || phase === 'done' || phase === 'paused' ? (
+            <div className="listen-status">
+              {phase === 'countdown' ? (
+                <div className="count-ring">{count}</div>
+              ) : (
+                <>
+                  <p className="overlay-title">
+                    {phase === 'done' ? '本课完成' : phase === 'paused' ? '已暂停' : '听音识谱练习'}
+                  </p>
+                  <p className="note-meta">
+                    {phase === 'done'
+                      ? `准 ${stats.perfect} · 可 ${stats.good} · 连击 ${best}`
+                      : '看低音谱号 → 指板高亮 → 拉准自动下一音'}
+                  </p>
+                </>
+              )}
+            </div>
+          ) : null}
+
+          {phase === 'playing' && combo > 1 ? (
+            <p className="note-meta" style={{ textAlign: 'center' }}>
+              连续准确 {combo}
+            </p>
+          ) : null}
+
+          {phase === 'playing' && popup ? (
+            <p key={popup.key} className={`listen-flash ${popup.verdict}`}>
+              {VERDICT_ZH[popup.verdict]}
+            </p>
+          ) : null}
+        </>
       ) : (
-        <div className="rhythm-stage" style={{ height: LANE_H }}>
-          <div className="rhythm-lanes" aria-hidden="true">
-            {LANE_STRINGS.map((s) => (
-              <div key={s.id} className={`rhythm-lane lane-${s.id.toLowerCase()}`} />
-            ))}
+        <>
+          <div className="rhythm-simple-bar">
+            <select
+              className="chart-select"
+              value={chart.id}
+              aria-label="练习曲目"
+              onChange={(e) => {
+                const next = CHARTS.find((c) => c.id === e.target.value)
+                if (!next) return
+                setChart(next)
+                setBpm(next.baseBpm)
+                setPhase('idle')
+              }}
+            >
+              {CHARTS.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+            <strong className="rhythm-score-inline">{score}</strong>
           </div>
-          <div className="hit-line" style={{ top: HIT_Y }} />
-          <div className="hit-zone" style={{ top: HIT_Y - 16 }} />
-          {visible.map((n) => {
-            const y = HIT_Y - ((n.time - t) / LEAD_MS) * HIT_Y
-            const laneIdx = LANE_STRINGS.findIndex((s) => s.id === n.string)
-            const hit = n.verdict && n.verdict !== 'miss'
-            const label = noteLabel(n.string, n.semitones)
-            return (
-              <div
-                key={n.id}
-                className={`note-block ${n.verdict ?? ''} ${hit ? 'pop' : ''}`}
-                style={{ top: y - 28, left: `${laneIdx * 25}%` }}
-              >
-                <strong style={{ color: STRING_COLOR[n.string] }}>{label.letter}</strong>
-                <span>
-                  {label.solfege} · {fingerLabel(n.finger, n.position)}
-                </span>
-                <em>{stringMeta(n.string).roman}</em>
-              </div>
-            )
-          })}
-          <div className="lane-pads">
-            {LANE_STRINGS.map((s) => {
-              const lit = now - flash[s.id] < 220
+
+          {current && tip ? (
+            <p className="rhythm-next-tip">
+              <span style={{ color: STRING_COLOR[current.string] }}>{stringMeta(current.string).roman}</span>
+              {tip.letter} · {fingerLabel(current.finger, current.position)}
+            </p>
+          ) : (
+            <p className="rhythm-next-tip muted">落到亮线时点对应弦</p>
+          )}
+
+          <div className="rhythm-stage simple" style={{ height: LANE_H }}>
+            <div className="rhythm-lanes" aria-hidden="true">
+              {LANE_STRINGS.map((s) => (
+                <div key={s.id} className={`rhythm-lane lane-${s.id.toLowerCase()}`} />
+              ))}
+            </div>
+            <div className="hit-line" style={{ top: HIT_Y }} />
+            {visible.map((n) => {
+              const y = HIT_Y - ((n.time - t) / LEAD_MS) * HIT_Y
+              const laneIdx = LANE_STRINGS.findIndex((s) => s.id === n.string)
+              const hit = n.verdict && n.verdict !== 'miss'
+              const label = noteLabel(n.string, n.semitones)
               return (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`lane-pad ${lit ? 'lit' : ''}`}
-                  style={{ borderTopColor: STRING_COLOR[s.id] }}
-                  onPointerDown={() => judgeLane(s.id)}
+                <div
+                  key={n.id}
+                  className={`note-block compact ${n.verdict ?? ''} ${hit ? 'pop' : ''}`}
+                  style={{ top: y - 22, left: `${laneIdx * 25}%` }}
                 >
-                  <strong style={{ color: STRING_COLOR[s.id] }}>{s.roman}</strong>
-                  <span>{s.id}弦</span>
-                </button>
+                  <strong style={{ color: STRING_COLOR[n.string] }}>{label.letter}</strong>
+                </div>
               )
             })}
-          </div>
-          {popup ? (
-            <div
-              key={popup.key}
-              className={`verdict-pop ${popup.verdict}`}
-              style={{ top: HIT_Y - 52 }}
-            >
-              {VERDICT_ZH[popup.verdict]}
+            <div className="lane-pads">
+              {LANE_STRINGS.map((s) => {
+                const lit = now - flash[s.id] < 220
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`lane-pad ${lit ? 'lit' : ''}`}
+                    style={{ borderTopColor: STRING_COLOR[s.id] }}
+                    onPointerDown={() => judgeLane(s.id)}
+                  >
+                    <strong style={{ color: STRING_COLOR[s.id] }}>{s.roman}</strong>
+                  </button>
+                )
+              })}
             </div>
-          ) : null}
-          {phase === 'countdown' ? (
-            <div className="rhythm-overlay">
-              <div className="count-ring">{count}</div>
-            </div>
-          ) : null}
-          {phase === 'idle' || phase === 'paused' || phase === 'done' ? (
-            <div className="rhythm-overlay">
-              <p className="overlay-title">
-                {phase === 'done' ? '练习完成' : phase === 'paused' ? '已暂停' : chart.title}
-              </p>
-              <p className="note-meta">
-                {phase === 'done'
-                  ? `准 ${stats.perfect} · 可 ${stats.good} · 过 ${stats.miss} · 连击 ${best}`
-                  : '音块落到线时点对应弦轨'}
-              </p>
-              <button
-                type="button"
-                className="primary"
-                onClick={() => (phase === 'paused' ? setPhase('playing') : void startCountdown())}
+            {popup ? (
+              <div
+                key={popup.key}
+                className={`verdict-pop ${popup.verdict}`}
+                style={{ top: HIT_Y - 48 }}
               >
-                {phase === 'paused' ? '继续' : phase === 'done' ? '再来一次' : '开始'}
-              </button>
-            </div>
-          ) : null}
-        </div>
+                {VERDICT_ZH[popup.verdict]}
+              </div>
+            ) : null}
+            {phase === 'countdown' ? (
+              <div className="rhythm-overlay">
+                <div className="count-ring">{count}</div>
+              </div>
+            ) : null}
+            {phase === 'idle' || phase === 'paused' || phase === 'done' ? (
+              <div className="rhythm-overlay">
+                <p className="overlay-title">
+                  {phase === 'done' ? '完成' : phase === 'paused' ? '暂停' : '准备'}
+                </p>
+                {phase === 'done' ? (
+                  <p className="note-meta">
+                    准 {stats.perfect} · 可 {stats.good} · 过 {stats.miss}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => (phase === 'paused' ? setPhase('playing') : void startCountdown())}
+                >
+                  {phase === 'paused' ? '继续' : phase === 'done' ? '再来' : '开始'}
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rhythm-simple-controls">
+            <button
+              type="button"
+              className={`primary ${phase === 'playing' ? 'danger' : ''}`}
+              onClick={() => {
+                if (phase === 'playing') {
+                  setPhase('paused')
+                  return
+                }
+                if (phase === 'paused') {
+                  setPhase('playing')
+                  return
+                }
+                void startCountdown()
+              }}
+            >
+              {phase === 'playing' ? '暂停' : phase === 'paused' ? '继续' : '开始'}
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                reset()
+                setPhase('idle')
+              }}
+            >
+              重来
+            </button>
+            <label className="bpm-compact">
+              <span>{bpm}</span>
+              <input
+                type="range"
+                min={40}
+                max={120}
+                step={2}
+                value={bpm}
+                onChange={(e) => {
+                  setBpm(Number(e.target.value))
+                  setPhase('idle')
+                }}
+              />
+            </label>
+          </div>
+        </>
       )}
 
-      {mode === 'listen' && (phase === 'idle' || phase === 'countdown' || phase === 'done' || phase === 'paused') ? (
-        <div className="listen-status">
-          {phase === 'countdown' ? (
-            <div className="count-ring">{count}</div>
-          ) : (
-            <>
-              <p className="overlay-title">
-                {phase === 'done' ? '本课完成' : phase === 'paused' ? '已暂停' : '听音识谱练习'}
-              </p>
-              <p className="note-meta">
-                {phase === 'done'
-                  ? `准 ${stats.perfect} · 可 ${stats.good} · 连击 ${best}`
-                  : '参考 tonestro / CelloEasy：看低音谱号 → 指板高亮 → 拉准自动下一音'}
-              </p>
-            </>
-          )}
-        </div>
-      ) : null}
+      {mode === 'listen' ? (
+        <>
+          <div className="rhythm-progress">
+            <span style={{ width: `${progress}%` }} />
+          </div>
 
-      {mode === 'listen' && phase === 'playing' && combo > 1 ? (
-        <p className="note-meta" style={{ textAlign: 'center' }}>
-          连续准确 {combo}
-        </p>
-      ) : null}
+          <div className="rhythm-controls">
+            <button
+              type="button"
+              className={`primary ${phase === 'playing' ? 'danger' : ''}`}
+              onClick={() => {
+                if (phase === 'playing') {
+                  setPhase('paused')
+                  return
+                }
+                if (phase === 'paused') {
+                  setPhase('playing')
+                  return
+                }
+                void startCountdown()
+              }}
+            >
+              {phase === 'playing' ? '暂停' : phase === 'paused' ? '继续' : '开始练习'}
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                reset()
+                setPhase('idle')
+                tuner.stop()
+              }}
+            >
+              重来
+            </button>
+          </div>
 
-      {mode === 'listen' && phase === 'playing' && popup ? (
-        <p key={popup.key} className={`listen-flash ${popup.verdict}`}>
-          {VERDICT_ZH[popup.verdict]}
-        </p>
-      ) : null}
-
-      <div className="rhythm-progress">
-        <span style={{ width: `${progress}%` }} />
-      </div>
-
-      <div className="rhythm-controls">
-        <button
-          type="button"
-          className={`primary ${phase === 'playing' ? 'danger' : ''}`}
-          onClick={() => {
-            if (phase === 'playing') {
-              setPhase('paused')
-              return
-            }
-            if (phase === 'paused') {
-              setPhase('playing')
-              return
-            }
-            void startCountdown()
-          }}
-        >
-          {phase === 'playing' ? '暂停' : phase === 'paused' ? '继续' : '开始练习'}
-        </button>
-        <button
-          type="button"
-          className="ghost"
-          onClick={() => {
-            reset()
-            setPhase('idle')
-            if (mode === 'listen') tuner.stop()
-          }}
-        >
-          重来
-        </button>
-      </div>
-
-      <div className="chart-list">
-        <p className="chart-label">练习曲目</p>
-        {CHARTS.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            className={`chart-item ${chart.id === c.id ? 'active' : ''}`}
-            onClick={() => {
-              setChart(c)
-              setBpm(c.baseBpm)
-            }}
-          >
-            <span>
-              <strong>{c.title}</strong>
-              <em>{c.subtitle}</em>
-            </span>
-            <small>
-              {c.notes.length} 音 · {c.baseBpm} BPM
-            </small>
-          </button>
-        ))}
-      </div>
-
-      {mode === 'rhythm' ? (
-        <label className="bpm-row">
-          <span>速度</span>
-          <strong>{bpm} BPM</strong>
-          <input
-            type="range"
-            min={40}
-            max={120}
-            step={2}
-            value={bpm}
-            onChange={(e) => {
-              setBpm(Number(e.target.value))
-              setPhase('idle')
-            }}
-          />
-        </label>
+          <div className="chart-list">
+            <p className="chart-label">练习曲目</p>
+            {CHARTS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`chart-item ${chart.id === c.id ? 'active' : ''}`}
+                onClick={() => {
+                  setChart(c)
+                  setBpm(c.baseBpm)
+                }}
+              >
+                <span>
+                  <strong>{c.title}</strong>
+                  <em>{c.subtitle}</em>
+                </span>
+                <small>
+                  {c.notes.length} 音 · {c.baseBpm} BPM
+                </small>
+              </button>
+            ))}
+          </div>
+          <p className="note-meta listen-hint">听音模式不赶拍子 · 拉准即进入下一音</p>
+        </>
       ) : (
-        <p className="note-meta listen-hint">听音模式不赶拍子 · 拉准即进入下一音 · 默认 50 BPM 曲目编排</p>
+        <div className="rhythm-progress thin">
+          <span style={{ width: `${progress}%` }} />
+        </div>
       )}
     </section>
   )
