@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cello Studio · 付费教程分屏</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #050805; color: #e8ffe9; font-family: -apple-system, 'PingFang SC', sans-serif; }
+      .split {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .pane {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        border-right: 1px solid rgba(61, 255, 74, 0.16);
+      }
+      .pane:last-child { border-right: 0; }
+      .label {
+        padding: 14px 20px 8px;
+        font-size: 15px;
+        letter-spacing: 0.18em;
+        color: #3dff4a;
+        text-align: center;
+      }
+      iframe {
+        flex: 1;
+        width: 100%;
+        border: 0;
+        background: #050805;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="split">
+      <section class="pane">
+        <div class="label">首页 · 调音器</div>
+        <iframe src="/?tutorial=1&demoHome=1&embed=1" title="home"></iframe>
+      </section>
+      <section class="pane">
+        <div class="label">付费教程 · 一次买断</div>
+        <iframe src="/?tutorial=1&demoPay=1&embed=1" title="paywall"></iframe>
+      </section>
+    </div>
+  </body>
+</html>

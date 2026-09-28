@@ -1,0 +1,102 @@
+:root {
+  color-scheme: dark;
+  --bg: #070707;
+  --canvas: #0c0c0c;
+  --well: #141414;
+  --card: #242424;
+  --card-2: #2b2b2b;
+  --accent: #22e06a;
+  --accent-deep: #18c45c;
+  --ink: #f4f4f4;
+  --ink-on: #0b0b0b;
+  --muted: #8a8a8a;
+  --gold: #22e06a;
+  --gold-soft: rgba(34, 224, 106, 0.16);
+  --danger: #ff3b4a;
+  --ok: #22e06a;
+  --stroke: rgba(255, 255, 255, 0.06);
+  --stroke-on: rgba(34, 224, 106, 0.55);
+  --elev: 0 1px 0 rgba(255, 255, 255, 0.04);
+  --panel: var(--card);
+  --card-on: var(--accent);
+  font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(900px 480px at 50% -8%, rgba(34, 224, 106, 0.14) 0%, transparent 58%),
+    var(--bg);
+  color: var(--ink);
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+@media (max-width: 820px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--canvas);
+  }
+
+  #root {
+    display: block;
+    padding: 0;
+  }
+}
+
+html.desktop,
+html.desktop body,
+html.desktop #root {
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  overflow: hidden;
+}
+
+html.desktop body {
+  background: var(--canvas);
+}
+
+html.desktop #root {
+  display: block;
+  padding: 0;
+}

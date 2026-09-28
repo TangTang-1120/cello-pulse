@@ -1,0 +1,9 @@
+<view class="wrap">
+  <view class="hero">
+    <view class="mark"></view>
+    <text class="name">Cello Studio</text>
+    <text class="sub">大提琴调音 · 节拍</text>
+  </view>
+  <text class="copy">完整调音、节拍与把位请使用 App Store 版。本小程序用于品牌入口；若已配置业务域名，可将 pages/index 改为 web-view 打开 H5。</text>
+  <view class="chip">一次买断 · 非订阅</view>
+</view>

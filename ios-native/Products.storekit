@@ -1,0 +1,39 @@
+{
+  "identifier" : "CelloStudioStore",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "16.00",
+      "familyShareable" : false,
+      "internalID" : "A1B2C3D4E5F60718",
+      "localizations" : [
+        {
+          "description" : "一次买断，永久使用大提琴调音器与节拍器。不含自动续订。",
+          "displayName" : "永久解锁",
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "One-time purchase to unlock the cello tuner and metronome forever. Not a subscription.",
+          "displayName" : "Lifetime Unlock",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.cellostudio.lifetime",
+      "referenceName" : "Lifetime Unlock",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0000000000",
+    "_developerTeamID" : "TEAMID"
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "desc": "Cello Studio",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

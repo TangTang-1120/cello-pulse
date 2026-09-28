@@ -1,0 +1,12 @@
+{
+  "pages": ["pages/index/index"],
+  "window": {
+    "navigationBarTitleText": "Cello Studio",
+    "navigationBarBackgroundColor": "#0c0c0c",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0c0c0c",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,42 @@
+.wrap {
+  min-height: 100vh;
+  padding: 48px 24px;
+  background: #0c0c0c;
+  box-sizing: border-box;
+}
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.mark {
+  width: 36px;
+  height: 48px;
+  border-radius: 8px 8px 16px 16px;
+  background: #22e06a;
+  margin-bottom: 8px;
+}
+.name {
+  font-size: 28px;
+  font-weight: 700;
+}
+.sub {
+  color: #8a8a8a;
+  font-size: 15px;
+}
+.copy {
+  display: block;
+  line-height: 1.6;
+  color: #b0b0b0;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.chip {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #1f3d28 0%, #0c0c0c 100%);
+  color: #e8ffe9;
+  font-size: 13px;
+}
