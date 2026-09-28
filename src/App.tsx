@@ -3,12 +3,13 @@ import { useEntitlement } from './billing/EntitlementContext'
 import { MetronomePanel } from './components/MetronomePanel'
 import { Paywall } from './components/Paywall'
 import { PositionPanel } from './components/PositionPanel'
+import { RhythmPanel } from './components/RhythmPanel'
 import { TunerPanel } from './components/TunerPanel'
 import type { TunerMode, TunerReading } from './hooks/useTuner'
 import { midiToHz, CELLO_STRINGS } from './audio/notes'
 import './App.css'
 
-type Tab = 'tuner' | 'position' | 'metronome'
+type Tab = 'rhythm' | 'tuner' | 'position' | 'metronome'
 
 declare global {
   interface Window {
@@ -30,7 +31,7 @@ const demoHome = params.has('demoHome')
 const demoPay = params.has('demoPay')
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('tuner')
+  const [tab, setTab] = useState<Tab>('rhythm')
   const [showPaywall, setShowPaywall] = useState(false)
   const [caption, setCaption] = useState('Cello Studio 试用教程')
   const [demoListening, setDemoListening] = useState(false)
@@ -117,7 +118,7 @@ export default function App() {
         <img className="brand-mark" src="/logo-cello.png" alt="" />
         <div className="brand-copy">
           <p className="eyebrow">Cello Studio</p>
-          <h1>大提琴调音 · 节拍</h1>
+          <h1>调音 · 节拍 · 跟奏</h1>
         </div>
       </header>
 
@@ -129,7 +130,14 @@ export default function App() {
         <p className="status-chip">试用已结束</p>
       )}
 
-      <nav className="tabs tab-switch tabs-3" aria-label="功能切换">
+      <nav className="tabs tab-switch tabs-4" aria-label="功能切换">
+        <button
+          type="button"
+          className={tab === 'rhythm' ? 'active' : ''}
+          onClick={() => setTab('rhythm')}
+        >
+          跟奏
+        </button>
         <button
           type="button"
           className={tab === 'tuner' ? 'active' : ''}
@@ -154,7 +162,9 @@ export default function App() {
       </nav>
 
       <div className="stage">
-        {tab === 'tuner' ? (
+        {tab === 'rhythm' ? (
+          <RhythmPanel canUse={canUse} onRequireUnlock={requireUnlock} />
+        ) : tab === 'tuner' ? (
           <TunerPanel
             canUse={canUse}
             onRequireUnlock={requireUnlock}
