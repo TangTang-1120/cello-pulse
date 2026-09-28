@@ -1954,3 +1954,203 @@ html.desktop .plan-card {
   0%, 100% { box-shadow: 0 0 0 0 rgba(34, 224, 106, 0.35); }
   50% { box-shadow: 0 0 0 10px rgba(34, 224, 106, 0); }
 }
+
+/* —— Professional practice (tonestro / Purely Cello inspired) —— */
+.pro-practice .rhythm-kicker {
+  letter-spacing: 0.04em;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--well);
+}
+
+.mode-switch button {
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 10px 8px;
+}
+
+.mode-switch button.active {
+  background: var(--accent);
+  color: var(--ink-on);
+}
+
+.staff-card.pro {
+  background: linear-gradient(180deg, #161616 0%, #101010 100%);
+}
+
+.bass-clef-drawn {
+  color: rgba(244, 244, 244, 0.82);
+}
+
+.fingering-num {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.pro-row {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.finger-tip.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 100%;
+}
+
+.finger-tip.stack .tip-idle {
+  margin: auto;
+}
+
+.ref-btn {
+  align-self: stretch;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.mini-board {
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  background: var(--well);
+  padding: 10px;
+}
+
+.mini-romans {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.mini-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mini-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+.mini-cell {
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0c0c0c;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.mini-cell.open {
+  border-style: dashed;
+}
+
+.mini-cell.lit {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
+}
+
+.mini-caption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.intonation {
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  background: var(--well);
+  padding: 12px;
+}
+
+.intonation-bar {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6 0%, #22e06a 50%, #ff3b4a 100%);
+  opacity: 0.9;
+}
+
+.intonation-needle {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 18px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  transition: left 80ms linear;
+}
+
+.center-mark {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 2px;
+  height: 22px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.intonation .note-meta {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.intonation.ok .note-meta { color: var(--ok); }
+.intonation.flat .note-meta { color: #60a5fa; }
+.intonation.sharp .note-meta { color: #f87171; }
+
+.listen-status {
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 18px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.listen-flash {
+  text-align: center;
+  font-weight: 800;
+  font-size: 22px;
+  animation: float-up 500ms ease-out forwards;
+}
+
+.listen-flash.perfect { color: var(--accent); }
+.listen-flash.good { color: #fde68a; }
+.listen-flash.miss { color: var(--danger); }
+
+.listen-hint {
+  text-align: center;
+  padding: 4px 2px 8px;
+}
+
+@media (max-width: 380px) {
+  .pro-row {
+    grid-template-columns: 1fr;
+  }
+}
