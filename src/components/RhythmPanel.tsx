@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { centsOff } from '../audio/notes'
 import type { CelloStringId } from '../audio/notes'
-import { useTuner } from '../hooks/useTuner'
 import {
   CHARTS,
   KIND_LABEL,
@@ -17,7 +15,7 @@ import {
   playTap,
   stringMeta,
 } from '../rhythm/music'
-import { playReference, targetHz, STRING_COLOR } from '../rhythm/practice'
+import { playReference, STRING_COLOR } from '../rhythm/practice'
 import { MiniFingerboard } from './MiniFingerboard'
 import { StaffSnippet } from './StaffSnippet'
 
@@ -26,11 +24,8 @@ const PERFECT_MS = 140
 const GOOD_MS = 360
 const LANE_H = 320
 const HIT_Y = LANE_H - 72
-/** Beginner intonation window (Cello Scales Tutor uses 5–20¢; we start wider). */
-const IN_TUNE_CENTS = 28
-const HOLD_MS = 180
 
-type Mode = 'listen' | 'rhythm'
+type Mode = 'rhythm' | 'quiz'
 type Verdict = 'perfect' | 'good' | 'miss'
 type Phase = 'idle' | 'countdown' | 'playing' | 'paused' | 'done'
 type RuntimeNote = ChartNote & { id: number; time: number; verdict: Verdict | null }
@@ -53,11 +48,10 @@ export function RhythmPanel({
   const [chart, setChart] = useState<Chart>(CHARTS[0]!)
   const [bpm, setBpm] = useState(CHARTS[0]!.baseBpm)
   const visibleCharts = useMemo(() => chartsByKind(kind), [kind])
+
   const [phase, setPhase] = useState<Phase>('idle')
   const [count, setCount] = useState(3)
   const [score, setScore] = useState(0)
-  const [combo, setCombo] = useState(0)
-  const [best, setBest] = useState(0)
   const [stats, setStats] = useState({ perfect: 0, good: 0, miss: 0 })
   const [flash, setFlash] = useState<Record<CelloStringId, number>>({
     C: 0,
@@ -66,9 +60,9 @@ export function RhythmPanel({
     A: 0,
   })
   const [popup, setPopup] = useState<{ verdict: Verdict; key: number } | null>(null)
-  const [listenIdx, setListenIdx] = useState(0)
-  const [pitchHint, setPitchHint] = useState<'flat' | 'sharp' | 'ok' | 'wait'>('wait')
-  const [centsLive, setCentsLive] = useState<number | null>(null)
+  const [quizIdx, setQuizIdx] = useState(0)
+  const [quizFeedback, setQuizFeedback] = useState<'ok' | 'no' | null>(null)
+  const [showHint, setShowHint] = useState(true)
   const [, setTick] = useState(0)
 
   const notesRef = useRef<RuntimeNote[]>([])
@@ -76,12 +70,9 @@ export function RhythmPanel({
   const startRef = useRef(0)
   const rafRef = useRef<number | null>(null)
   const phaseRef = useRef<Phase>('idle')
-  const holdRef = useRef(0)
-  const listenIdxRef = useRef(0)
+  const quizIdxRef = useRef(0)
   phaseRef.current = phase
-  listenIdxRef.current = listenIdx
-
-  const tuner = useTuner({ minHz: 55, maxHz: 520 })
+  quizIdxRef.current = quizIdx
 
   const scale = chart.baseBpm / bpm
   const runtime = useMemo<RuntimeNote[]>(
@@ -98,28 +89,17 @@ export function RhythmPanel({
   const reset = useCallback(() => {
     notesRef.current = runtime.map((n) => ({ ...n }))
     elapsedRef.current = 0
-    holdRef.current = 0
-    setListenIdx(0)
+    setQuizIdx(0)
     setScore(0)
-    setCombo(0)
-    setBest(0)
     setStats({ perfect: 0, good: 0, miss: 0 })
     setPopup(null)
-    setPitchHint('wait')
-    setCentsLive(null)
+    setQuizFeedback(null)
   }, [runtime])
 
   useEffect(() => {
     reset()
     setPhase('idle')
   }, [reset, mode])
-
-  useEffect(() => {
-    return () => {
-      tuner.stop()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const totalMs = notesRef.current.length
     ? notesRef.current[notesRef.current.length - 1]!.time
@@ -130,40 +110,10 @@ export function RhythmPanel({
     setPopup({ verdict, key: performance.now() })
     setFlash((f) => ({ ...f, [string]: performance.now() }))
     playTap(verdict === 'miss' ? 'miss' : verdict === 'perfect' ? 'perfect' : 'good')
-    if (verdict === 'miss') {
-      setCombo(0)
-    } else {
-      setCombo((c) => {
-        const next = c + 1
-        setBest((b) => Math.max(b, next))
-        return next
-      })
+    if (verdict !== 'miss') {
       setScore((s) => s + (verdict === 'perfect' ? 100 : 60))
     }
   }, [])
-
-  const advanceListen = useCallback(
-    (verdict: Verdict) => {
-      const idx = listenIdxRef.current
-      const note = notesRef.current[idx]
-      if (!note || note.verdict) return
-      note.verdict = verdict
-      register(verdict, note.string)
-      const next = idx + 1
-      if (next >= notesRef.current.length) {
-        setPhase('done')
-        setListenIdx(next)
-        return
-      }
-      setListenIdx(next)
-      holdRef.current = 0
-      setPitchHint('wait')
-      setCentsLive(null)
-      const n = notesRef.current[next]!
-      playReference(n.string, n.semitones, 0.35)
-    },
-    [register],
-  )
 
   const judgeLane = useCallback(
     (string: CelloStringId) => {
@@ -186,7 +136,6 @@ export function RhythmPanel({
     [mode, register],
   )
 
-  // Rhythm falling-note loop
   useEffect(() => {
     if (phase !== 'playing' || mode !== 'rhythm') return
     startRef.current = performance.now() - elapsedRef.current
@@ -212,53 +161,51 @@ export function RhythmPanel({
     }
   }, [phase, mode, register, totalMs])
 
-  // Listen mode: continuous pitch check with hold time
-  useEffect(() => {
-    if (phase !== 'playing' || mode !== 'listen') return
-    let raf = 0
-    let last = performance.now()
-    const loop = () => {
-      raf = requestAnimationFrame(loop)
-      const now = performance.now()
-      const dt = now - last
-      last = now
-      const note = notesRef.current[listenIdxRef.current]
+  const answerQuiz = useCallback(
+    (string: CelloStringId) => {
+      if (phaseRef.current !== 'playing' || mode !== 'quiz') return
+      const idx = quizIdxRef.current
+      const note = notesRef.current[idx]
       if (!note || note.verdict) return
-      const hz = tuner.reading?.hz
-      const level = tuner.level ?? 0
-      if (!hz || level < 0.01) {
-        setPitchHint('wait')
-        setCentsLive(null)
-        holdRef.current = 0
+
+      setFlash((f) => ({ ...f, [string]: performance.now() }))
+      if (string !== note.string) {
+        setQuizFeedback('no')
+        playTap('miss')
+        setStats((s) => ({ ...s, miss: s.miss + 1 }))
+        window.setTimeout(() => setQuizFeedback(null), 450)
         return
       }
-      const cents = centsOff(hz, targetHz(note.string, note.semitones))
-      setCentsLive(cents)
-      if (Math.abs(cents) <= IN_TUNE_CENTS) {
-        setPitchHint('ok')
-        holdRef.current += dt
-        if (holdRef.current >= HOLD_MS) {
-          const verdict: Verdict = Math.abs(cents) <= 12 ? 'perfect' : 'good'
-          advanceListen(verdict)
+
+      note.verdict = 'perfect'
+      setQuizFeedback('ok')
+      register('perfect', string)
+      playReference(note.string, note.semitones, 0.4)
+      window.setTimeout(() => {
+        setQuizFeedback(null)
+        const next = idx + 1
+        if (next >= notesRef.current.length) {
+          setQuizIdx(next)
+          setPhase('done')
+          return
         }
-      } else {
-        holdRef.current = 0
-        setPitchHint(cents < 0 ? 'flat' : 'sharp')
-      }
-    }
-    loop()
-    return () => cancelAnimationFrame(raf)
-  }, [phase, mode, advanceListen, tuner.reading, tuner.level])
+        setQuizIdx(next)
+      }, 380)
+    },
+    [mode, register],
+  )
 
-
-  const startCountdown = useCallback(async () => {
+  const startCountdown = useCallback(() => {
     if (!canUse) {
       onRequireUnlock?.()
       return
     }
     reset()
-    if (mode === 'listen' && !tuner.listening) {
-      await tuner.start()
+    if (mode === 'quiz') {
+      setPhase('playing')
+      const first = notesRef.current[0]
+      if (first) playReference(first.string, first.semitones, 0.35)
+      return
     }
     setPhase('countdown')
     setCount(3)
@@ -269,48 +216,50 @@ export function RhythmPanel({
       if (c <= 0) {
         window.clearInterval(id)
         setPhase('playing')
-        const first = notesRef.current[0]
-        if (mode === 'listen' && first) playReference(first.string, first.semitones, 0.45)
       } else {
         setCount(c)
         playTap('count')
       }
     }, 700)
-  }, [canUse, onRequireUnlock, reset, mode, tuner])
+  }, [canUse, onRequireUnlock, reset, mode])
 
-  const current =
-    mode === 'listen'
-      ? notesRef.current[listenIdx]
-      : notesRef.current.find((n) => !n.verdict && n.time >= elapsedRef.current - 60)
+  const selectChart = (c: Chart) => {
+    setChart(c)
+    setBpm(c.baseBpm)
+    setPhase('idle')
+  }
 
   const t = elapsedRef.current
   const visible =
     mode === 'rhythm'
       ? notesRef.current.filter((n) => n.time > t - 400 && n.time < t + LEAD_MS + 200)
       : []
-  const approaching =
-    mode === 'rhythm' && current ? current.time - t < 900 : phase === 'playing'
+  const current =
+    mode === 'quiz'
+      ? notesRef.current[quizIdx]
+      : notesRef.current.find((n) => !n.verdict && n.time >= t - 60)
+  const tip = current ? noteLabel(current.string, current.semitones) : null
   const progress =
-    mode === 'listen'
+    mode === 'quiz'
       ? notesRef.current.length
-        ? Math.min(100, (listenIdx / notesRef.current.length) * 100)
+        ? Math.min(100, (quizIdx / notesRef.current.length) * 100)
         : 0
       : totalMs
         ? Math.min(100, Math.max(0, (t / totalMs) * 100))
         : 0
   const now = performance.now()
-  const tip = current ? noteLabel(current.string, current.semitones) : null
   const doneCount = notesRef.current.filter((n) => n.verdict).length
 
   return (
-    <section className={`panel panel-in rhythm-panel pro-practice ${mode === 'rhythm' ? 'rhythm-simple' : ''}`}>
+    <section
+      className={`panel panel-in rhythm-panel pro-practice ${mode === 'rhythm' ? 'rhythm-simple' : 'quiz-mode'}`}
+    >
       <div className="mode-switch" role="tablist" aria-label="练习模式">
         <button
           type="button"
           className={mode === 'rhythm' ? 'active' : ''}
           onClick={() => {
             setMode('rhythm')
-            tuner.stop()
             setPhase('idle')
           }}
         >
@@ -318,153 +267,17 @@ export function RhythmPanel({
         </button>
         <button
           type="button"
-          className={mode === 'listen' ? 'active' : ''}
+          className={mode === 'quiz' ? 'active' : ''}
           onClick={() => {
-            setMode('listen')
+            setMode('quiz')
             setPhase('idle')
           }}
         >
-          听音识谱
+          点弦识谱
         </button>
       </div>
 
-      {mode === 'listen' ? (
-        <>
-          <div className="rhythm-head">
-            <div>
-              <p className="rhythm-kicker">
-                {KIND_LABEL[chart.kind]} · 谱面 × 指板 × 音准
-              </p>
-              <h2 className="rhythm-title">{chart.title}</h2>
-              <p className="note-meta">{chart.subtitle}</p>
-            </div>
-            <div className="rhythm-score">
-              <strong>{score}</strong>
-              <span>
-                {doneCount}/{chart.notes.length}
-              </span>
-            </div>
-          </div>
-
-          <div className="kind-switch" role="tablist" aria-label="曲库分类">
-            {([
-              ['scale', '音阶'],
-              ['etude', '练习曲'],
-              ['piece', '乐曲'],
-              ['all', '全部'],
-            ] as const).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                className={kind === id ? 'active' : ''}
-                onClick={() => {
-                  setKind(id)
-                  const list = chartsByKind(id)
-                  const next = list.find((c) => c.id === chart.id) ?? list[0]
-                  if (next) {
-                    setChart(next)
-                    setBpm(next.baseBpm)
-                    setPhase('idle')
-                  }
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <StaffSnippet
-            stringId={current?.string}
-            semitones={current?.semitones}
-            finger={current?.finger}
-            pulse={approaching && phase === 'playing'}
-          />
-
-          <div className="pro-row">
-            <MiniFingerboard stringId={current?.string} semitones={current?.semitones} />
-            <div className={`finger-tip stack ${approaching && phase === 'playing' ? 'hot' : ''}`}>
-              {current && tip ? (
-                <>
-                  <div className="finger-roman" style={{ color: STRING_COLOR[current.string] }}>
-                    <strong>{stringMeta(current.string).roman}</strong>
-                    <span>{stringMeta(current.string).name}</span>
-                  </div>
-                  <div className="finger-copy">
-                    <p className="note-name">{tip.solfege}</p>
-                    <p className="note-meta">
-                      {fingerLabel(current.finger, current.position)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="ghost ref-btn"
-                    onClick={() => playReference(current.string, current.semitones)}
-                  >
-                    听标准音
-                  </button>
-                </>
-              ) : (
-                <p className="note-meta tip-idle">选择曲目后开始 · 看谱找指位再拉奏</p>
-              )}
-            </div>
-          </div>
-
-          <div className={`intonation ${pitchHint}`}>
-            <div className="intonation-bar">
-              <span
-                className="intonation-needle"
-                style={{
-                  left: `${centsLive == null ? 50 : Math.min(92, Math.max(8, 50 + centsLive))}%`,
-                }}
-              />
-              <i className="center-mark" />
-            </div>
-            <p className="note-meta">
-              {phase !== 'playing'
-                ? '麦克风听音判定 · 对准后自动进入下一音'
-                : pitchHint === 'ok'
-                  ? `准确 ${centsLive != null ? `${centsLive > 0 ? '+' : ''}${centsLive.toFixed(0)}¢` : ''}`
-                  : pitchHint === 'flat'
-                    ? '偏低 · 再抬高一点'
-                    : pitchHint === 'sharp'
-                      ? '偏高 · 再压低一点'
-                      : '请拉奏目标音…'}
-            </p>
-            {tuner.error ? <p className="error">{tuner.error}</p> : null}
-          </div>
-
-          {phase === 'idle' || phase === 'countdown' || phase === 'done' || phase === 'paused' ? (
-            <div className="listen-status">
-              {phase === 'countdown' ? (
-                <div className="count-ring">{count}</div>
-              ) : (
-                <>
-                  <p className="overlay-title">
-                    {phase === 'done' ? '本课完成' : phase === 'paused' ? '已暂停' : '听音识谱练习'}
-                  </p>
-                  <p className="note-meta">
-                    {phase === 'done'
-                      ? `准 ${stats.perfect} · 可 ${stats.good} · 连击 ${best}`
-                      : '看低音谱号 → 指板高亮 → 拉准自动下一音'}
-                  </p>
-                </>
-              )}
-            </div>
-          ) : null}
-
-          {phase === 'playing' && combo > 1 ? (
-            <p className="note-meta" style={{ textAlign: 'center' }}>
-              连续准确 {combo}
-            </p>
-          ) : null}
-
-          {phase === 'playing' && popup ? (
-            <p key={popup.key} className={`listen-flash ${popup.verdict}`}>
-              {VERDICT_ZH[popup.verdict]}
-            </p>
-          ) : null}
-        </>
-      ) : (
+      {mode === 'rhythm' ? (
         <>
           <div className="rhythm-simple-bar">
             <select
@@ -473,10 +286,7 @@ export function RhythmPanel({
               aria-label="练习曲目"
               onChange={(e) => {
                 const next = CHARTS.find((c) => c.id === e.target.value)
-                if (!next) return
-                setChart(next)
-                setBpm(next.baseBpm)
-                setPhase('idle')
+                if (next) selectChart(next)
               }}
             >
               {(['scale', 'etude', 'piece'] as const).map((k) => (
@@ -494,7 +304,9 @@ export function RhythmPanel({
 
           {current && tip ? (
             <p className="rhythm-next-tip">
-              <span style={{ color: STRING_COLOR[current.string] }}>{stringMeta(current.string).roman}</span>
+              <span style={{ color: STRING_COLOR[current.string] }}>
+                {stringMeta(current.string).roman}
+              </span>
               {tip.solfege} · {fingerLabel(current.finger, current.position)}
             </p>
           ) : (
@@ -566,7 +378,7 @@ export function RhythmPanel({
                 <button
                   type="button"
                   className="primary"
-                  onClick={() => (phase === 'paused' ? setPhase('playing') : void startCountdown())}
+                  onClick={() => (phase === 'paused' ? setPhase('playing') : startCountdown())}
                 >
                   {phase === 'paused' ? '继续' : phase === 'done' ? '再来' : '开始'}
                 </button>
@@ -587,7 +399,7 @@ export function RhythmPanel({
                   setPhase('playing')
                   return
                 }
-                void startCountdown()
+                startCountdown()
               }}
             >
               {phase === 'playing' ? '暂停' : phase === 'paused' ? '继续' : '开始'}
@@ -617,11 +429,121 @@ export function RhythmPanel({
               />
             </label>
           </div>
+          <div className="rhythm-progress thin">
+            <span style={{ width: `${progress}%` }} />
+          </div>
         </>
-      )}
-
-      {mode === 'listen' ? (
+      ) : (
         <>
+          <div className="rhythm-head">
+            <div>
+              <p className="rhythm-kicker">小白识谱 · 看谱点弦 · 不用麦克风</p>
+              <h2 className="rhythm-title">{chart.title}</h2>
+              <p className="note-meta">{chart.subtitle}</p>
+            </div>
+            <div className="rhythm-score">
+              <strong>
+                {Math.min(doneCount, chart.notes.length)}/{chart.notes.length}
+              </strong>
+              <span>进度</span>
+            </div>
+          </div>
+
+          <div className="kind-switch" role="tablist" aria-label="曲库分类">
+            {(
+              [
+                ['scale', '音阶'],
+                ['etude', '练习曲'],
+                ['piece', '乐曲'],
+                ['all', '全部'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={kind === id ? 'active' : ''}
+                onClick={() => {
+                  setKind(id)
+                  const list = chartsByKind(id)
+                  const next = list.find((c) => c.id === chart.id) ?? list[0]
+                  if (next) selectChart(next)
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <StaffSnippet
+            stringId={current?.string}
+            semitones={current?.semitones}
+            finger={showHint ? current?.finger : undefined}
+            pulse={phase === 'playing' && !!current}
+            showFingering={showHint}
+          />
+
+          <div className="pro-row">
+            {showHint ? (
+              <MiniFingerboard stringId={current?.string} semitones={current?.semitones} />
+            ) : (
+              <div className="mini-board hint-off">
+                <p className="note-meta tip-idle">提示已关闭 · 先想再点弦</p>
+              </div>
+            )}
+            <div className={`finger-tip stack ${quizFeedback === 'ok' ? 'hot' : ''} ${quizFeedback === 'no' ? 'wrong' : ''}`}>
+              {current && tip ? (
+                <>
+                  <p className="note-name quiz-solfege">{tip.solfege}</p>
+                  <p className="note-meta">
+                    {showHint
+                      ? `${stringMeta(current.string).roman} · ${fingerLabel(current.finger, current.position)}`
+                      : '这是哪一根弦？'}
+                  </p>
+                  <button
+                    type="button"
+                    className="ghost ref-btn"
+                    onClick={() => current && playReference(current.string, current.semitones)}
+                  >
+                    听标准音
+                  </button>
+                </>
+              ) : (
+                <p className="note-meta tip-idle">选曲目后点开始</p>
+              )}
+            </div>
+          </div>
+
+          <div className="quiz-pads">
+            {LANE_STRINGS.map((s) => {
+              const lit = now - flash[s.id] < 220
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`quiz-pad ${lit ? 'lit' : ''}`}
+                  style={{ borderColor: STRING_COLOR[s.id], color: STRING_COLOR[s.id] }}
+                  disabled={phase !== 'playing'}
+                  onClick={() => answerQuiz(s.id)}
+                >
+                  <strong>{s.roman}</strong>
+                  <span>{s.id}弦</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {quizFeedback === 'ok' ? <p className="listen-flash perfect">对了</p> : null}
+          {quizFeedback === 'no' ? <p className="listen-flash miss">再想想</p> : null}
+
+          {phase === 'done' ? (
+            <div className="listen-status">
+              <p className="overlay-title">本课完成</p>
+              <p className="note-meta">
+                答对 {stats.perfect} · 点错 {stats.miss}
+              </p>
+            </div>
+          ) : null}
+
           <div className="rhythm-progress">
             <span style={{ width: `${progress}%` }} />
           </div>
@@ -632,28 +554,21 @@ export function RhythmPanel({
               className={`primary ${phase === 'playing' ? 'danger' : ''}`}
               onClick={() => {
                 if (phase === 'playing') {
-                  setPhase('paused')
+                  setPhase('idle')
+                  reset()
                   return
                 }
-                if (phase === 'paused') {
-                  setPhase('playing')
-                  return
-                }
-                void startCountdown()
+                startCountdown()
               }}
             >
-              {phase === 'playing' ? '暂停' : phase === 'paused' ? '继续' : '开始练习'}
+              {phase === 'playing' ? '结束' : phase === 'done' ? '再练一次' : '开始识谱'}
             </button>
             <button
               type="button"
-              className="ghost"
-              onClick={() => {
-                reset()
-                setPhase('idle')
-                tuner.stop()
-              }}
+              className={`ghost ${showHint ? '' : 'dim'}`}
+              onClick={() => setShowHint((v) => !v)}
             >
-              重来
+              {showHint ? '隐藏提示' : '显示提示'}
             </button>
           </div>
 
@@ -666,30 +581,22 @@ export function RhythmPanel({
                 key={c.id}
                 type="button"
                 className={`chart-item ${chart.id === c.id ? 'active' : ''}`}
-                onClick={() => {
-                  setChart(c)
-                  setBpm(c.baseBpm)
-                  setPhase('idle')
-                }}
+                onClick={() => selectChart(c)}
               >
                 <span>
                   <strong>{c.title}</strong>
                   <em>{c.subtitle}</em>
                 </span>
                 <small>
-                  {KIND_LABEL[c.kind]} · {c.notes.length} 音
+                  {c.notes.length} 音
                 </small>
               </button>
             ))}
           </div>
           <p className="note-meta listen-hint">
-            看谱找指位 · 拉准自动下一音 · 适合音阶 / 练习曲 / 乐曲识谱
+            看唱名和谱 → 点 IV / III / II / I 弦 · 适合零基础认弦识谱
           </p>
         </>
-      ) : (
-        <div className="rhythm-progress thin">
-          <span style={{ width: `${progress}%` }} />
-        </div>
       )}
     </section>
   )
