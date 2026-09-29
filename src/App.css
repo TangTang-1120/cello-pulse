@@ -90,12 +90,12 @@
 .phone > .stage,
 .phone > .tabs,
 .phone > .pos-chart {
-  margin-left: 50px;
-  margin-right: 50px;
+  margin-left: 30px;
+  margin-right: 30px;
 }
 
 .phone > .top {
-  margin-top: 50px;
+  margin-top: 30px;
 }
 
 .top {
@@ -105,10 +105,9 @@
 }
 
 .brand-mark {
-  height: 52px;
+  height: 48px;
   width: auto;
   object-fit: contain;
-  mix-blend-mode: screen;
   flex: 0 0 auto;
   animation: mark-breathe 3.6s ease-in-out infinite;
 }
@@ -1381,12 +1380,29 @@ html.building[data-build='7'] .tutorial-caption {
     box-shadow: none;
   }
 
+  html:not(.tutorial) .phone > .top,
+  html:not(.tutorial) .phone > .status-chip,
+  html:not(.tutorial) .phone > .stage,
+  html:not(.tutorial) .phone > .tabs,
+  html:not(.tutorial) .phone > .pos-chart {
+    margin-left: 30px;
+    margin-right: 30px;
+  }
+
   html:not(.tutorial) .phone > .top {
-    margin-top: calc(50px + env(safe-area-inset-top));
+    margin-top: calc(30px + env(safe-area-inset-top));
   }
 
   html:not(.tutorial) .phone > .stage {
     margin-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  html:not(.tutorial) .top h1 {
+    font-size: 22px;
+  }
+
+  html:not(.tutorial) .brand-mark {
+    height: 42px;
   }
 }
 

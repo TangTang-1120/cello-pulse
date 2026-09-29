@@ -115,7 +115,11 @@ export default function App() {
         <div className="frost" />
       </div>
       <header className="top">
-        <img className="brand-mark" src="/logo-cello.png" alt="" />
+        <img
+          className="brand-mark"
+          src={`${import.meta.env.BASE_URL}logo-cello.png`}
+          alt="Cello Studio"
+        />
         <div className="brand-copy">
           <p className="eyebrow">Cello Studio</p>
           <h1>调音 · 节拍 · 跟奏</h1>
