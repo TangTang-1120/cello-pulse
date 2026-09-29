@@ -2,7 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { centsOff } from '../audio/notes'
 import type { CelloStringId } from '../audio/notes'
 import { useTuner } from '../hooks/useTuner'
-import { CHARTS, type Chart, type ChartNote } from '../rhythm/charts'
+import {
+  CHARTS,
+  KIND_LABEL,
+  chartsByKind,
+  type Chart,
+  type ChartKind,
+  type ChartNote,
+} from '../rhythm/charts'
 import {
   LANE_STRINGS,
   fingerLabel,
@@ -42,8 +49,10 @@ export function RhythmPanel({
   onRequireUnlock?: () => void
 }) {
   const [mode, setMode] = useState<Mode>('listen')
+  const [kind, setKind] = useState<ChartKind | 'all'>('scale')
   const [chart, setChart] = useState<Chart>(CHARTS[0]!)
-  const [bpm, setBpm] = useState(50)
+  const [bpm, setBpm] = useState(CHARTS[0]!.baseBpm)
+  const visibleCharts = useMemo(() => chartsByKind(kind), [kind])
   const [phase, setPhase] = useState<Phase>('idle')
   const [count, setCount] = useState(3)
   const [score, setScore] = useState(0)
@@ -323,7 +332,9 @@ export function RhythmPanel({
         <>
           <div className="rhythm-head">
             <div>
-              <p className="rhythm-kicker">专业练习 · 谱面 × 指板 × 音准</p>
+              <p className="rhythm-kicker">
+                {KIND_LABEL[chart.kind]} · 谱面 × 指板 × 音准
+              </p>
               <h2 className="rhythm-title">{chart.title}</h2>
               <p className="note-meta">{chart.subtitle}</p>
             </div>
@@ -333,6 +344,33 @@ export function RhythmPanel({
                 {doneCount}/{chart.notes.length}
               </span>
             </div>
+          </div>
+
+          <div className="kind-switch" role="tablist" aria-label="曲库分类">
+            {([
+              ['scale', '音阶'],
+              ['etude', '练习曲'],
+              ['piece', '乐曲'],
+              ['all', '全部'],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={kind === id ? 'active' : ''}
+                onClick={() => {
+                  setKind(id)
+                  const list = chartsByKind(id)
+                  const next = list.find((c) => c.id === chart.id) ?? list[0]
+                  if (next) {
+                    setChart(next)
+                    setBpm(next.baseBpm)
+                    setPhase('idle')
+                  }
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           <StaffSnippet
@@ -441,10 +479,14 @@ export function RhythmPanel({
                 setPhase('idle')
               }}
             >
-              {CHARTS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
+              {(['scale', 'etude', 'piece'] as const).map((k) => (
+                <optgroup key={k} label={KIND_LABEL[k]}>
+                  {chartsByKind(k).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             <strong className="rhythm-score-inline">{score}</strong>
@@ -616,8 +658,10 @@ export function RhythmPanel({
           </div>
 
           <div className="chart-list">
-            <p className="chart-label">练习曲目</p>
-            {CHARTS.map((c) => (
+            <p className="chart-label">
+              {kind === 'all' ? '全部曲目' : KIND_LABEL[kind]}（{visibleCharts.length}）
+            </p>
+            {visibleCharts.map((c) => (
               <button
                 key={c.id}
                 type="button"
@@ -625,6 +669,7 @@ export function RhythmPanel({
                 onClick={() => {
                   setChart(c)
                   setBpm(c.baseBpm)
+                  setPhase('idle')
                 }}
               >
                 <span>
@@ -632,12 +677,14 @@ export function RhythmPanel({
                   <em>{c.subtitle}</em>
                 </span>
                 <small>
-                  {c.notes.length} 音 · {c.baseBpm} BPM
+                  {KIND_LABEL[c.kind]} · {c.notes.length} 音
                 </small>
               </button>
             ))}
           </div>
-          <p className="note-meta listen-hint">听音模式不赶拍子 · 拉准即进入下一音</p>
+          <p className="note-meta listen-hint">
+            看谱找指位 · 拉准自动下一音 · 适合音阶 / 练习曲 / 乐曲识谱
+          </p>
         </>
       ) : (
         <div className="rhythm-progress thin">
