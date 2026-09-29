@@ -14,7 +14,7 @@ export const CELLO_STRINGS: {
   { id: 'A', name: 'A 弦', note: 'A3', midi: 57 },
 ]
 
-/** 把位图从左到右：粗→细 / Do Sol Ré La */
+/** 把位图从左到右：粗→细 / do so re la */
 export const POSITION_STRINGS: {
   id: CelloStringId
   roman: 'IV' | 'III' | 'II' | 'I'
@@ -26,7 +26,8 @@ export const POSITION_STRINGS: {
   { id: 'A', roman: 'I', pitchClass: 9 },
 ]
 
-const SOLFEGE = ['Do', 'Do#', 'Ré', 'Mib', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'Sib', 'Si']
+/** 唱名：do re mi fa so la xi（# 为升号） */
+const SOLFEGE = ['do', '#do', 're', '#re', 'mi', 'fa', '#fa', 'so', '#so', 'la', '#la', 'xi']
 
 export function solfegeAt(pitchClass: number, semitones: number) {
   return SOLFEGE[(pitchClass + semitones) % 12]

@@ -352,9 +352,9 @@ export function RhythmPanel({
                     <span>{stringMeta(current.string).name}</span>
                   </div>
                   <div className="finger-copy">
-                    <p className="note-name">{tip.letter}</p>
+                    <p className="note-name">{tip.solfege}</p>
                     <p className="note-meta">
-                      {tip.solfege} · {fingerLabel(current.finger, current.position)}
+                      {fingerLabel(current.finger, current.position)}
                     </p>
                   </div>
                   <button
@@ -453,7 +453,7 @@ export function RhythmPanel({
           {current && tip ? (
             <p className="rhythm-next-tip">
               <span style={{ color: STRING_COLOR[current.string] }}>{stringMeta(current.string).roman}</span>
-              {tip.letter} · {fingerLabel(current.finger, current.position)}
+              {tip.solfege} · {fingerLabel(current.finger, current.position)}
             </p>
           ) : (
             <p className="rhythm-next-tip muted">落到亮线时点对应弦</p>
@@ -477,7 +477,7 @@ export function RhythmPanel({
                   className={`note-block compact ${n.verdict ?? ''} ${hit ? 'pop' : ''}`}
                   style={{ top: y - 22, left: `${laneIdx * 25}%` }}
                 >
-                  <strong style={{ color: STRING_COLOR[n.string] }}>{label.letter}</strong>
+                  <strong style={{ color: STRING_COLOR[n.string] }}>{label.solfege}</strong>
                 </div>
               )
             })}

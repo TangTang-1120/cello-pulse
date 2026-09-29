@@ -21,10 +21,11 @@ export function noteLetter(stringId: CelloStringId, semitones: number) {
 
 export function noteLabel(stringId: CelloStringId, semitones: number) {
   const open = CELLO_STRINGS.find((item) => item.id === stringId)!
-  const lane = LANE_STRINGS.find((item) => item.id === stringId)!
+  // Fixed-do from C: C=do, D=re, E=mi, F=fa, G=so, A=la, B=xi
+  const solfege = solfegeAt(0, (open.midi + semitones) % 12)
   return {
     letter: noteLetter(stringId, semitones),
-    solfege: solfegeAt(lane.pitchClass, semitones),
+    solfege,
     midi: open.midi + semitones,
   }
 }

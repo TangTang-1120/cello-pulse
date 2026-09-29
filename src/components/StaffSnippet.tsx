@@ -42,7 +42,7 @@ export function StaffSnippet({
         <span className="staff-kicker">Bass clef · 低音谱号</span>
         <strong>
           {label
-            ? `${label.letter} · ${label.solfege}${stringId ? ` · ${stringMeta(stringId).roman}` : ''}`
+            ? `${label.solfege}${stringId ? ` · ${stringMeta(stringId).roman}` : ''}`
             : '看谱 · 找指位 · 拉准'}
         </strong>
       </div>
