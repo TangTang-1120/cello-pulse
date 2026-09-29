@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cello Studio · 付费教程</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #050805; color: #e8ffe9; font-family: -apple-system, 'PingFang SC', sans-serif; }
+      .wrap {
+        height: 100vh;
+        display: grid;
+        grid-template-rows: 52px 1fr;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        border-bottom: 1px solid rgba(61, 255, 74, 0.16);
+        font-size: 18px;
+        letter-spacing: 0.12em;
+        color: #3dff4a;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 0;
+      }
+      figure {
+        margin: 0;
+        display: grid;
+        grid-template-rows: 40px 1fr;
+        min-height: 0;
+      }
+      figure:first-child { border-right: 1px solid rgba(61, 255, 74, 0.14); }
+      figcaption {
+        display: grid;
+        place-items: center;
+        font-size: 15px;
+        color: #8aa890;
+      }
+      iframe {
+        width: 620px;
+        height: 1040px;
+        border: 0;
+        border-radius: 28px;
+        justify-self: center;
+        align-self: start;
+        margin-top: 8px;
+        transform: scale(1.08);
+        transform-origin: top center;
+        background: #070c08;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="bar">
+        <span>Cello Studio</span>
+        <span id="caption">首页调音 · 右侧会员一次买断</span>
+      </header>
+      <div class="split">
+        <figure>
+          <figcaption>左边 · 首页</figcaption>
+          <iframe id="home" src="/?tutorial=1&embed=1&demoHome=1" title="home"></iframe>
+        </figure>
+        <figure>
+          <figcaption>右边 · 付费教程</figcaption>
+          <iframe id="pay" src="/?tutorial=1&embed=1&demoPay=1&expireTrial=1" title="pay"></iframe>
+        </figure>
+      </div>
+    </div>
+  </body>
+</html>

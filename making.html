@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cello Studio · 制作过程</title>
+    <style>
+      :root { --green: #3dff4a; --line: rgba(61, 255, 74, 0.16); --ink: #e8ffe9; --muted: #7d9a82; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: #050805; color: var(--ink); font-family: ui-monospace, Menlo, Monaco, monospace; }
+      .stage { height: 100vh; display: grid; grid-template-rows: 44px 1fr 118px; background: radial-gradient(70% 50% at 18% -10%, rgba(61,255,74,.14), transparent 55%), #050805; }
+      .bar { display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--line); background: #0b110c; }
+      .dots { display: flex; gap: 6px; }
+      .dots span { width: 10px; height: 10px; border-radius: 50%; background: #2a332c; }
+      .dots span:first-child { background: #ff5a6a; }
+      .dots span:nth-child(2) { background: #ffc14d; }
+      .dots span:nth-child(3) { background: #3dff4a; }
+      .title { font-size: 14px; color: var(--green); letter-spacing: .08em; }
+      .workspace { display: grid; grid-template-columns: 1.22fr .78fr; min-height: 0; }
+      .editor { padding: 10px 16px; border-right: 1px solid var(--line); overflow: hidden; }
+      .file { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+      .code { white-space: pre-wrap; font-size: 14px; line-height: 1.36; overflow: hidden; max-height: calc(100vh - 180px); }
+      .kw { color: #7ee8ff; } .str { color: #3dff4a; } .cm { color: #6d8572; } .fn { color: #ffd166; }
+      .preview { display: grid; place-items: start center; background: #080d09; padding-top: 12px; overflow: hidden; }
+      .preview iframe { width: 620px; height: 980px; border: 1px solid var(--line); border-radius: 28px; transform: scale(1.04); transform-origin: top center; background: #070c08; }
+      .term { border-top: 1px solid var(--line); background: #080d09; padding: 8px 16px; font-size: 13px; color: #b7d6bb; white-space: pre-wrap; }
+      .prompt { color: var(--green); }
+      .caret { display: inline-block; width: 8px; height: 1em; background: var(--green); vertical-align: text-bottom; animation: blink .8s step-end infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <header class="bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="title" id="headline">Cello Studio · 虚拟跑代码</div>
+      </header>
+      <div class="workspace">
+        <section class="editor">
+          <div class="file" id="file">src/App.tsx</div>
+          <div class="code" id="code"></div>
+        </section>
+        <section class="preview">
+          <iframe id="app" src="/?tutorial=1&embed=1&build=1" title="preview"></iframe>
+        </section>
+      </div>
+      <pre class="term" id="term"><span class="prompt">~/cello-studio</span></pre>
+    </div>
+    <script>
+      const scenes = [
+        {
+          file: 'src/audio/notes.ts · yin.ts · useTuner.ts',
+          headline: '四根弦标准音 + YIN 拉弦检测',
+          term: '$ npm create vite@latest cello-studio -- --template react-ts && npm i && npm run dev',
+          html: `<span class="cm">// 大提琴空弦：C2 65.41  G2 98  D3 146.83  A3 220</span>
+<span class="kw">export const</span> CELLO_STRINGS = [
+  { id: <span class="str">'C'</span>, note: <span class="str">'C2'</span>, midi: 36 },
+  { id: <span class="str">'G'</span>, note: <span class="str">'G2'</span>, midi: 43 },
+  { id: <span class="str">'D'</span>, note: <span class="str">'D3'</span>, midi: 50 },
+  { id: <span class="str">'A'</span>, note: <span class="str">'A3'</span>, midi: 57 },
+]
+<span class="kw">export function</span> <span class="fn">centsOff</span>(hz, targetHz) {
+  <span class="kw">return</span> 1200 * Math.log2(hz / targetHz)
+}
+<span class="kw">export function</span> <span class="fn">nearestCelloString</span>(hz) {
+  <span class="kw">return</span> CELLO_STRINGS.reduce((best, s) =>
+    Math.abs(centsOff(hz, midiToHz(s.midi))) &lt; Math.abs(centsOff(hz, midiToHz(best.midi))) ? s : best)
+}
+<span class="kw">export function</span> <span class="fn">detectPitchYin</span>(buffer, sampleRate) {
+  <span class="kw">const</span> tau = yinDifference(buffer)
+  <span class="kw">return</span> tau ? { frequency: sampleRate / tau } : <span class="kw">null</span>
+}
+<span class="kw">export function</span> <span class="fn">useTuner</span>() {
+  <span class="kw">const</span> stream = <span class="kw">await</span> navigator.mediaDevices.getUserMedia({ audio: <span class="kw">true</span> })
+  analyser.getFloatTimeDomainData(buffer)
+  <span class="kw">const</span> pitch = detectPitchYin(buffer, ctx.sampleRate)
+  setReading({ hz: pitch.frequency, cents: centsOff(pitch.frequency, target), inTune: Math.abs(cents) &lt;= 5 })
+}`,
+        },
+        {
+          file: 'src/components/TunerPanel.tsx · MetronomePanel.tsx',
+          headline: '拉弦提示偏低/准确/偏高，节拍器 lookahead',
+          term: '$ 模拟拉弦校对  C 偏低→准确→偏高  G D A 准音',
+          html: `<span class="kw">function</span> <span class="fn">pitchHint</span>(cents) {
+  <span class="kw">if</span> (cents &gt; 5) <span class="kw">return</span> { label: <span class="str">'偏高'</span>, advice: <span class="str">'请调低'</span>, tone: <span class="str">'high'</span> }
+  <span class="kw">if</span> (cents &lt; -5) <span class="kw">return</span> { label: <span class="str">'偏低'</span>, advice: <span class="str">'请调高'</span>, tone: <span class="str">'low'</span> }
+  <span class="kw">return</span> { label: <span class="str">'准确'</span>, advice: <span class="str">'保持'</span>, tone: <span class="str">'ok'</span> }
+}
+<span class="kw">export function</span> <span class="fn">TunerPanel</span>({ canUse, onRequireUnlock }) {
+  <span class="kw">const</span> { listening, reading, start, stop } = useTuner()
+  <span class="kw">const</span> hint = reading ? pitchHint(reading.cents) : <span class="kw">null</span>
+  <span class="kw">return</span> (
+    &lt;section className=<span class="str">"panel"</span>&gt;
+      &lt;div className={<span class="str">\`gauge \${hint?.tone}\`</span>}&gt;
+        &lt;p className=<span class="str">"note-name"</span>&gt;{reading?.note ?? <span class="str">'—'</span>}&lt;/p&gt;
+        {hint &amp;&amp; &lt;p className=<span class="str">"pitch-hint"</span>&gt;{hint.label}&lt;small&gt;{hint.advice}&lt;/small&gt;&lt;/p&gt;}
+      &lt;/div&gt;
+      &lt;button onClick={() =&gt; listening ? stop() : canUse ? start() : onRequireUnlock()}&gt;
+        {listening ? <span class="str">'停止聆听'</span> : <span class="str">'开始调音'</span>}
+      &lt;/button&gt;
+    &lt;/section&gt;
+  )
+}
+<span class="kw">function</span> <span class="fn">scheduler</span>(ctx, bpm = 72) {
+  <span class="kw">while</span> (nextNoteTime &lt; ctx.currentTime + 0.1) {
+    click(ctx, nextNoteTime, beat % 4 === 0)
+    nextNoteTime += 60 / bpm
+    beat++
+  }
+}`,
+        },
+        {
+          file: 'src/App.css · Paywall.tsx · billing/config.ts',
+          headline: '光晕 5%→20%，会员 3 天试用后买断 ¥16',
+          term: '$ npx cap sync ios   StoreKit  com.cellostudio.lifetime  非消耗型内购',
+          html: `<span class="cm">/* 首页毛玻璃光晕：平时 5%，撑开最大 20% */</span>
+<span class="kw">@keyframes</span> bloom-breathe {
+  0%, 100% { opacity: 0.05; transform: scale(0.92); filter: blur(22px); }
+  35% { opacity: 0.20; transform: scale(1.38) translate3d(-18px, 36px, 0); }
+}
+<span class="kw">export const</span> LIFETIME_PRODUCT_ID = <span class="str">'com.cellostudio.lifetime'</span>
+<span class="kw">export const</span> TRIAL_DAYS = 3
+<span class="kw">export const</span> MARKETING_PRICE_CNY = 16
+<span class="kw">export function</span> <span class="fn">Paywall</span>() {
+  <span class="kw">const</span> [tier, setTier] = useState(<span class="str">'lifetime'</span>)
+  <span class="kw">const</span> [agreed, setAgreed] = useState(<span class="kw">false</span>)
+  <span class="kw">const</span> cta = tier === <span class="str">'vip'</span> ? <span class="str">'0元开通'</span> : <span class="str">'立即买断 ¥16'</span>
+  <span class="kw">return</span> (
+    &lt;section className=<span class="str">"member"</span> role=<span class="str">"dialog"</span>&gt;
+      &lt;h2&gt;即刻成为 &lt;em&gt;大提琴会员&lt;/em&gt;&lt;/h2&gt;
+      &lt;button onClick={() =&gt; setTier(<span class="str">'vip'</span>)}&gt;VIP 3天体验卡 ¥0&lt;/button&gt;
+      &lt;button onClick={() =&gt; setTier(<span class="str">'lifetime'</span>)}&gt;永久解锁 划线 59 元&lt;/button&gt;
+      &lt;label&gt;&lt;input type=<span class="str">"checkbox"</span> onChange={e =&gt; setAgreed(e.target.checked)} /&gt;会员服务协议&lt;/label&gt;
+      &lt;button className=<span class="str">"member-cta"</span> disabled={!agreed} onClick={purchase}&gt;{cta}&lt;/button&gt;
+    &lt;/section&gt;
+  )
+}`,
+        },
+      ]
+
+      const codeEl = document.getElementById('code')
+      const fileEl = document.getElementById('file')
+      const termEl = document.getElementById('term')
+      const headEl = document.getElementById('headline')
+
+      function typeHtml(target, html, speed) {
+        return new Promise((resolve) => {
+          let i = 0
+          target.innerHTML = ''
+          const timer = setInterval(() => {
+            i += 22
+            target.innerHTML = html.slice(0, i) + '<span class="caret"></span>'
+            target.scrollTop = target.scrollHeight
+            if (i >= html.length) {
+              clearInterval(timer)
+              target.innerHTML = html
+              resolve()
+            }
+          }, speed)
+        })
+      }
+
+      function wait(ms) {
+        return new Promise((r) => setTimeout(r, ms))
+      }
+
+      function api() {
+        return document.getElementById('app').contentWindow.__celloTutorial
+      }
+
+      async function ready() {
+        for (let i = 0; i < 80; i++) {
+          if (api()) return
+          await wait(50)
+        }
+      }
+
+      async function play() {
+        await ready()
+        api().setBuildStep(0)
+
+        fileEl.textContent = scenes[0].file
+        headEl.textContent = '从空壳开始 · 先搭标题'
+        termEl.innerHTML = '<span class="prompt">~/cello-studio</span>\n$ npm run dev'
+        const type0 = typeHtml(codeEl, scenes[0].html, 12)
+        await wait(500)
+        api().setBuildStep(1)
+        await wait(1400)
+        api().setBuildStep(2)
+        headEl.textContent = '状态条出现'
+        await wait(1200)
+        api().setBuildStep(3)
+        headEl.textContent = '切换调音器 / 节拍器'
+        await type0
+
+        fileEl.textContent = scenes[1].file
+        headEl.textContent = '表盘与四根弦长出来'
+        termEl.innerHTML = '<span class="prompt">~/cello-studio</span>\n$ 写入 TunerPanel + pitchHint'
+        const type1 = typeHtml(codeEl, scenes[1].html, 12)
+        api().setBuildStep(4)
+        await wait(1300)
+        api().setBuildStep(5)
+        await wait(1100)
+        api().setBuildStep(6)
+        await type1
+
+        fileEl.textContent = scenes[2].file
+        headEl.textContent = '开始调音 · 拉弦校对'
+        termEl.innerHTML = '<span class="prompt">~/cello-studio</span>\n$ 监听麦克风 · C 弦偏低 / 准确 / 偏高'
+        const type2 = typeHtml(codeEl, scenes[2].html, 12)
+        api().setBuildStep(7)
+        api().listen(true)
+        api().showString('C', -18)
+        api().setCaption('C 弦偏低 · 请调高')
+        await wait(1800)
+        api().showString('C', 0)
+        api().setCaption('C 弦准确 · 保持')
+        await wait(1600)
+        api().showString('C', 18)
+        api().setCaption('C 弦偏高 · 请调低')
+        await type2
+        headEl.textContent = '界面构建完成'
+      }
+      play()
+    </script>
+  </body>
+</html>
