@@ -48,7 +48,7 @@ export function RhythmPanel({
   canUse?: boolean
   onRequireUnlock?: () => void
 }) {
-  const [mode, setMode] = useState<Mode>('listen')
+  const [mode, setMode] = useState<Mode>('rhythm')
   const [kind, setKind] = useState<ChartKind | 'all'>('scale')
   const [chart, setChart] = useState<Chart>(CHARTS[0]!)
   const [bpm, setBpm] = useState(CHARTS[0]!.baseBpm)
@@ -307,16 +307,6 @@ export function RhythmPanel({
       <div className="mode-switch" role="tablist" aria-label="练习模式">
         <button
           type="button"
-          className={mode === 'listen' ? 'active' : ''}
-          onClick={() => {
-            setMode('listen')
-            setPhase('idle')
-          }}
-        >
-          听音识谱
-        </button>
-        <button
-          type="button"
           className={mode === 'rhythm' ? 'active' : ''}
           onClick={() => {
             setMode('rhythm')
@@ -325,6 +315,16 @@ export function RhythmPanel({
           }}
         >
           节奏跟奏
+        </button>
+        <button
+          type="button"
+          className={mode === 'listen' ? 'active' : ''}
+          onClick={() => {
+            setMode('listen')
+            setPhase('idle')
+          }}
+        >
+          听音识谱
         </button>
       </div>
 
