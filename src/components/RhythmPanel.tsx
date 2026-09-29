@@ -8,16 +8,8 @@ import {
   type ChartKind,
   type ChartNote,
 } from '../rhythm/charts'
-import {
-  LANE_STRINGS,
-  fingerLabel,
-  noteLabel,
-  playTap,
-  stringMeta,
-} from '../rhythm/music'
+import { LANE_STRINGS, fingerLabel, noteLabel, playTap } from '../rhythm/music'
 import { playReference, STRING_COLOR } from '../rhythm/practice'
-import { MiniFingerboard } from './MiniFingerboard'
-import { StaffSnippet } from './StaffSnippet'
 
 const LEAD_MS = 2800
 const PERFECT_MS = 140
@@ -36,6 +28,14 @@ const VERDICT_ZH: Record<Verdict, string> = {
   miss: '过',
 }
 
+/** 小白话弦名（不用罗马数字） */
+const STRING_EASY: Record<CelloStringId, { name: string; tip: string }> = {
+  C: { name: 'C弦', tip: '最粗' },
+  G: { name: 'G弦', tip: '偏粗' },
+  D: { name: 'D弦', tip: '偏细' },
+  A: { name: 'A弦', tip: '最细' },
+}
+
 export function RhythmPanel({
   canUse = true,
   onRequireUnlock,
@@ -47,7 +47,6 @@ export function RhythmPanel({
   const [kind, setKind] = useState<ChartKind | 'all'>('scale')
   const [chart, setChart] = useState<Chart>(CHARTS[0]!)
   const [bpm, setBpm] = useState(CHARTS[0]!.baseBpm)
-  const visibleCharts = useMemo(() => chartsByKind(kind), [kind])
 
   const [phase, setPhase] = useState<Phase>('idle')
   const [count, setCount] = useState(3)
@@ -173,7 +172,7 @@ export function RhythmPanel({
         setQuizFeedback('no')
         playTap('miss')
         setStats((s) => ({ ...s, miss: s.miss + 1 }))
-        window.setTimeout(() => setQuizFeedback(null), 450)
+        window.setTimeout(() => setQuizFeedback(null), 500)
         return
       }
 
@@ -190,7 +189,7 @@ export function RhythmPanel({
           return
         }
         setQuizIdx(next)
-      }, 380)
+      }, 420)
     },
     [mode, register],
   )
@@ -252,7 +251,7 @@ export function RhythmPanel({
 
   return (
     <section
-      className={`panel panel-in rhythm-panel pro-practice ${mode === 'rhythm' ? 'rhythm-simple' : 'quiz-mode'}`}
+      className={`panel panel-in rhythm-panel ${mode === 'rhythm' ? 'rhythm-simple' : 'quiz-easy'}`}
     >
       <div className="mode-switch" role="tablist" aria-label="练习模式">
         <button
@@ -305,12 +304,12 @@ export function RhythmPanel({
           {current && tip ? (
             <p className="rhythm-next-tip">
               <span style={{ color: STRING_COLOR[current.string] }}>
-                {stringMeta(current.string).roman}
+                {STRING_EASY[current.string].name}
               </span>
               {tip.solfege} · {fingerLabel(current.finger, current.position)}
             </p>
           ) : (
-            <p className="rhythm-next-tip muted">落到亮线时点对应弦</p>
+            <p className="rhythm-next-tip muted">音块落到亮线时，点下面的弦</p>
           )}
 
           <div className="rhythm-stage simple" style={{ height: LANE_H }}>
@@ -346,7 +345,7 @@ export function RhythmPanel({
                     style={{ borderTopColor: STRING_COLOR[s.id] }}
                     onPointerDown={() => judgeLane(s.id)}
                   >
-                    <strong style={{ color: STRING_COLOR[s.id] }}>{s.roman}</strong>
+                    <strong style={{ color: STRING_COLOR[s.id] }}>{STRING_EASY[s.id].name}</strong>
                   </button>
                 )
               })}
@@ -435,114 +434,93 @@ export function RhythmPanel({
         </>
       ) : (
         <>
-          <div className="rhythm-head">
-            <div>
-              <p className="rhythm-kicker">小白识谱 · 看谱点弦 · 不用麦克风</p>
-              <h2 className="rhythm-title">{chart.title}</h2>
-              <p className="note-meta">{chart.subtitle}</p>
-            </div>
-            <div className="rhythm-score">
-              <strong>
-                {Math.min(doneCount, chart.notes.length)}/{chart.notes.length}
-              </strong>
-              <span>进度</span>
-            </div>
-          </div>
-
-          <div className="kind-switch" role="tablist" aria-label="曲库分类">
-            {(
-              [
-                ['scale', '音阶'],
-                ['etude', '练习曲'],
-                ['piece', '乐曲'],
-                ['all', '全部'],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                className={kind === id ? 'active' : ''}
-                onClick={() => {
-                  setKind(id)
-                  const list = chartsByKind(id)
-                  const next = list.find((c) => c.id === chart.id) ?? list[0]
-                  if (next) selectChart(next)
-                }}
-              >
-                {label}
-              </button>
+          <select
+            className="chart-select"
+            value={chart.id}
+            aria-label="选一组练习"
+            onChange={(e) => {
+              const next = CHARTS.find((c) => c.id === e.target.value)
+              if (next) {
+                setKind(next.kind)
+                selectChart(next)
+              }
+            }}
+          >
+            {(['scale', 'etude', 'piece'] as const).map((k) => (
+              <optgroup key={k} label={KIND_LABEL[k]}>
+                {chartsByKind(k).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))}
+              </optgroup>
             ))}
+          </select>
+
+          <div className={`quiz-card ${quizFeedback ?? ''}`}>
+            {phase === 'idle' ? (
+              <>
+                <p className="quiz-big">点弦识谱</p>
+                <p className="quiz-sub">听到唱名后，点它是哪一根弦</p>
+                <p className="quiz-sub soft">不用麦克风 · 从粗到细：C → G → D → A</p>
+              </>
+            ) : phase === 'done' ? (
+              <>
+                <p className="quiz-big">练完啦</p>
+                <p className="quiz-sub">
+                  答对 {stats.perfect} 题
+                  {stats.miss ? ` · 点错 ${stats.miss} 次` : ''}
+                </p>
+              </>
+            ) : current && tip ? (
+              <>
+                <p className="quiz-label">现在这个音是</p>
+                <p className="quiz-big solfege">{tip.solfege}</p>
+                <p className="quiz-sub">
+                  {showHint
+                    ? `提示：点「${STRING_EASY[current.string].name}」（${STRING_EASY[current.string].tip}）`
+                    : '请点下面正确的那一根弦'}
+                </p>
+                <button
+                  type="button"
+                  className="ghost quiz-hear"
+                  onClick={() => playReference(current.string, current.semitones)}
+                >
+                  听一听这个音
+                </button>
+              </>
+            ) : null}
+
+            {quizFeedback === 'ok' ? <p className="quiz-toast ok">对了 ✓</p> : null}
+            {quizFeedback === 'no' ? <p className="quiz-toast no">不对，再选一次</p> : null}
           </div>
 
-          <StaffSnippet
-            stringId={current?.string}
-            semitones={current?.semitones}
-            finger={showHint ? current?.finger : undefined}
-            pulse={phase === 'playing' && !!current}
-            showFingering={showHint}
-          />
-
-          <div className="pro-row">
-            {showHint ? (
-              <MiniFingerboard stringId={current?.string} semitones={current?.semitones} />
-            ) : (
-              <div className="mini-board hint-off">
-                <p className="note-meta tip-idle">提示已关闭 · 先想再点弦</p>
-              </div>
-            )}
-            <div className={`finger-tip stack ${quizFeedback === 'ok' ? 'hot' : ''} ${quizFeedback === 'no' ? 'wrong' : ''}`}>
-              {current && tip ? (
-                <>
-                  <p className="note-name quiz-solfege">{tip.solfege}</p>
-                  <p className="note-meta">
-                    {showHint
-                      ? `${stringMeta(current.string).roman} · ${fingerLabel(current.finger, current.position)}`
-                      : '这是哪一根弦？'}
-                  </p>
-                  <button
-                    type="button"
-                    className="ghost ref-btn"
-                    onClick={() => current && playReference(current.string, current.semitones)}
-                  >
-                    听标准音
-                  </button>
-                </>
-              ) : (
-                <p className="note-meta tip-idle">选曲目后点开始</p>
-              )}
-            </div>
-          </div>
-
-          <div className="quiz-pads">
+          <div className="quiz-pads easy">
             {LANE_STRINGS.map((s) => {
               const lit = now - flash[s.id] < 220
+              const hintHere = showHint && phase === 'playing' && current?.string === s.id
               return (
                 <button
                   key={s.id}
                   type="button"
-                  className={`quiz-pad ${lit ? 'lit' : ''}`}
-                  style={{ borderColor: STRING_COLOR[s.id], color: STRING_COLOR[s.id] }}
+                  className={`quiz-pad ${lit ? 'lit' : ''} ${hintHere ? 'hint' : ''}`}
+                  style={{ borderColor: STRING_COLOR[s.id] }}
                   disabled={phase !== 'playing'}
                   onClick={() => answerQuiz(s.id)}
                 >
-                  <strong>{s.roman}</strong>
-                  <span>{s.id}弦</span>
+                  <strong style={{ color: STRING_COLOR[s.id] }}>{STRING_EASY[s.id].name}</strong>
+                  <span>{STRING_EASY[s.id].tip}</span>
                 </button>
               )
             })}
           </div>
 
-          {quizFeedback === 'ok' ? <p className="listen-flash perfect">对了</p> : null}
-          {quizFeedback === 'no' ? <p className="listen-flash miss">再想想</p> : null}
-
-          {phase === 'done' ? (
-            <div className="listen-status">
-              <p className="overlay-title">本课完成</p>
-              <p className="note-meta">
-                答对 {stats.perfect} · 点错 {stats.miss}
-              </p>
-            </div>
-          ) : null}
+          <p className="quiz-progress-text">
+            {phase === 'playing' || phase === 'done'
+              ? `第 ${Math.max(1, Math.min(doneCount + (phase === 'playing' ? 1 : 0), chart.notes.length))} / ${chart.notes.length} 题`
+              : `共 ${chart.notes.length} 题`}
+            {kind !== 'all' ? ` · ${KIND_LABEL[chart.kind]}` : ''}
+          </p>
 
           <div className="rhythm-progress">
             <span style={{ width: `${progress}%` }} />
@@ -561,41 +539,12 @@ export function RhythmPanel({
                 startCountdown()
               }}
             >
-              {phase === 'playing' ? '结束' : phase === 'done' ? '再练一次' : '开始识谱'}
+              {phase === 'playing' ? '结束' : phase === 'done' ? '再练一次' : '开始'}
             </button>
-            <button
-              type="button"
-              className={`ghost ${showHint ? '' : 'dim'}`}
-              onClick={() => setShowHint((v) => !v)}
-            >
-              {showHint ? '隐藏提示' : '显示提示'}
+            <button type="button" className="ghost" onClick={() => setShowHint((v) => !v)}>
+              {showHint ? '关掉提示' : '打开提示'}
             </button>
           </div>
-
-          <div className="chart-list">
-            <p className="chart-label">
-              {kind === 'all' ? '全部曲目' : KIND_LABEL[kind]}（{visibleCharts.length}）
-            </p>
-            {visibleCharts.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`chart-item ${chart.id === c.id ? 'active' : ''}`}
-                onClick={() => selectChart(c)}
-              >
-                <span>
-                  <strong>{c.title}</strong>
-                  <em>{c.subtitle}</em>
-                </span>
-                <small>
-                  {c.notes.length} 音
-                </small>
-              </button>
-            ))}
-          </div>
-          <p className="note-meta listen-hint">
-            看唱名和谱 → 点 IV / III / II / I 弦 · 适合零基础认弦识谱
-          </p>
         </>
       )}
     </section>

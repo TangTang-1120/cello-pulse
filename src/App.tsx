@@ -117,7 +117,7 @@ export default function App() {
       <header className="top">
         <img
           className="brand-mark"
-          src={`${import.meta.env.BASE_URL}logo-cello.png`}
+          src={`${import.meta.env.BASE_URL}app-icon.png`}
           alt="Cello Studio"
         />
         <div className="brand-copy">

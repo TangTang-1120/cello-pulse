@@ -105,10 +105,14 @@
 }
 
 .brand-mark {
+  width: 48px;
   height: 48px;
-  width: auto;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 12px;
   flex: 0 0 auto;
+  background: #0a1a0c;
+  border: 1px solid rgba(34, 224, 106, 0.35);
+  box-shadow: 0 0 18px rgba(34, 224, 106, 0.18);
   animation: mark-breathe 3.6s ease-in-out infinite;
 }
 
@@ -1402,6 +1406,7 @@ html.building[data-build='7'] .tutorial-caption {
   }
 
   html:not(.tutorial) .brand-mark {
+    width: 42px;
     height: 42px;
   }
 }
@@ -2355,4 +2360,101 @@ html.desktop .plan-card {
 
 .ghost.dim {
   opacity: 0.75;
+}
+
+/* —— 点弦识谱 · 小白版 —— */
+.quiz-easy {
+  gap: 12px;
+}
+
+.quiz-card {
+  border: 1px solid var(--stroke);
+  border-radius: 22px;
+  background: var(--well);
+  padding: 22px 16px;
+  text-align: center;
+  position: relative;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.quiz-card.ok {
+  border-color: rgba(34, 224, 106, 0.55);
+}
+
+.quiz-card.no {
+  border-color: rgba(255, 59, 74, 0.45);
+}
+
+.quiz-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quiz-big {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.quiz-big.solfege {
+  font-size: 56px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.quiz-sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.quiz-sub.soft {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quiz-hear {
+  margin-top: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+}
+
+.quiz-toast {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  margin: 0;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.quiz-toast.ok { color: var(--accent); }
+.quiz-toast.no { color: var(--danger); }
+
+.quiz-pads.easy {
+  gap: 10px;
+}
+
+.quiz-pads.easy .quiz-pad {
+  padding: 16px 6px;
+  background: #121212;
+}
+
+.quiz-pads.easy .quiz-pad.hint {
+  box-shadow: 0 0 0 2px rgba(34, 224, 106, 0.55);
+  background: rgba(34, 224, 106, 0.12);
+}
+
+.quiz-progress-text {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
 }
